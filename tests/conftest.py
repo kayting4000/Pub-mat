@@ -31,8 +31,16 @@ LAYOUT = make_user("layout_artist", 4)
 
 # --- DB session mock ---
 
-def mock_db():
+def make_execute_result(scalar=None, scalars_list=None):
+    result = MagicMock()
+    result.scalar_one_or_none = MagicMock(return_value=scalar)
+    result.scalars = MagicMock(return_value=MagicMock(all=MagicMock(return_value=scalars_list or [])))
+    return result
+
+
+def mock_db(scalar=None, scalars_list=None):
     session = AsyncMock(spec=AsyncSession)
+    session.execute = AsyncMock(return_value=make_execute_result(scalar, scalars_list))
     session.commit = AsyncMock()
     session.refresh = AsyncMock()
     session.add = MagicMock()

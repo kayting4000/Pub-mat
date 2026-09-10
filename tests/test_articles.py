@@ -34,7 +34,10 @@ def db():
         scalar_one_or_none=MagicMock(return_value=FAKE_ARTICLE),
         scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[FAKE_ARTICLE]))),
     ))
-    session.refresh = AsyncMock(side_effect=lambda obj: None)
+    session.refresh = AsyncMock(side_effect=lambda obj: (
+        setattr(obj, "id", 1) or
+        setattr(obj, "published_at", datetime(2024, 1, 1))
+    ))
     return session
 
 

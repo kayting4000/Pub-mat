@@ -2,11 +2,15 @@ from unittest.mock import AsyncMock, MagicMock
 from datetime import datetime
 
 import pytest
+from httpx import ASGITransport, AsyncClient
 
-from tests.conftest import make_user, JOURNALIST, EDITOR, ADMIN
+from app.main import app
+from app.core.database_pg import get_db
+from app.core.security import get_current_user
+from tests.conftest import JOURNALIST, EDITOR, ADMIN, make_user, mock_db
 
 
-def fake_user_row(role="journalist", user_id=1):
+def fake_user(role="journalist", user_id=1):
     u = MagicMock()
     u.id = user_id
     u.username = "testuser"
@@ -16,42 +20,85 @@ def fake_user_row(role="journalist", user_id=1):
     return u
 
 
-async def test_get_me(client):
-    resp = await client.get("/users/me")
+FAKE_USER = fake_user("journalist", 1)
+
+
+@pytest.fixture
+async def client_with_db(request):
+    current_user = getattr(request, "param", JOURNALIST)
+    db = mock_db(scalar=FAKE_USER, scalars_list=[FAKE_USER])
+    app.dependency_overrides[get_db] = lambda: db
+    app.dependency_overrides[get_current_user] = lambda: current_user
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+        yield c, db
+    app.dependency_overrides.pop(get_db, None)
+    app.dependency_overrides.pop(get_current_user, None)
+
+
+async def test_get_me(client_with_db):
+    c, _ = client_with_db
+    resp = await c.get("/users/me")
     assert resp.status_code == 200
     assert resp.json()["role"] == "journalist"
 
 
-async def test_list_users_as_editor(editor_client):
-    resp = await editor_client.get("/users")
+async def test_list_users_as_editor():
+    db = mock_db(scalars_list=[FAKE_USER])
+    app.dependency_overrides[get_db] = lambda: db
+    app.dependency_overrides[get_current_user] = lambda: EDITOR
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+        resp = await c.get("/users")
     assert resp.status_code == 200
+    app.dependency_overrides.pop(get_db, None)
+    app.dependency_overrides.pop(get_current_user, None)
 
 
-async def test_list_users_forbidden_for_journalist(client):
-    resp = await client.get("/users")
+async def test_list_users_forbidden_for_journalist(client_with_db):
+    c, _ = client_with_db
+    resp = await c.get("/users")
     assert resp.status_code == 403
 
 
-async def test_get_user_by_id(editor_client):
-    resp = await editor_client.get("/users/2")
-    assert resp.status_code in (200, 404)
+async def test_get_user_by_id():
+    db = mock_db(scalar=FAKE_USER)
+    app.dependency_overrides[get_db] = lambda: db
+    app.dependency_overrides[get_current_user] = lambda: EDITOR
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+        resp = await c.get("/users/1")
+    assert resp.status_code == 200
+    app.dependency_overrides.pop(get_db, None)
+    app.dependency_overrides.pop(get_current_user, None)
 
 
-async def test_update_role_as_admin(admin_client):
-    resp = await admin_client.put("/users/1/role", json={"role": "editor"})
-    assert resp.status_code in (200, 404)
+async def test_update_role_as_admin():
+    db = mock_db(scalar=FAKE_USER)
+    app.dependency_overrides[get_db] = lambda: db
+    app.dependency_overrides[get_current_user] = lambda: ADMIN
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+        resp = await c.put("/users/1/role", json={"role": "editor"})
+    assert resp.status_code == 200
+    app.dependency_overrides.pop(get_db, None)
+    app.dependency_overrides.pop(get_current_user, None)
 
 
-async def test_update_role_forbidden(editor_client):
-    resp = await editor_client.put("/users/1/role", json={"role": "admin"})
+async def test_update_role_forbidden(client_with_db):
+    c, _ = client_with_db
+    resp = await c.put("/users/1/role", json={"role": "admin"})
     assert resp.status_code == 403
 
 
-async def test_delete_user_as_admin(admin_client):
-    resp = await admin_client.delete("/users/1")
-    assert resp.status_code in (204, 404)
+async def test_delete_user_as_admin():
+    db = mock_db(scalar=FAKE_USER)
+    app.dependency_overrides[get_db] = lambda: db
+    app.dependency_overrides[get_current_user] = lambda: ADMIN
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+        resp = await c.delete("/users/1")
+    assert resp.status_code == 204
+    app.dependency_overrides.pop(get_db, None)
+    app.dependency_overrides.pop(get_current_user, None)
 
 
-async def test_delete_user_forbidden(client):
-    resp = await client.delete("/users/1")
+async def test_delete_user_forbidden(client_with_db):
+    c, _ = client_with_db
+    resp = await c.delete("/users/1")
     assert resp.status_code == 403
