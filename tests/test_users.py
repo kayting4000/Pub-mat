@@ -10,7 +10,7 @@ from app.core.security import get_current_user
 from tests.conftest import JOURNALIST, EDITOR, ADMIN, make_user, mock_db
 
 
-def fake_user(role="journalist", user_id=1):
+def fake_user(role="writer", user_id=1):
     u = MagicMock()
     u.id = user_id
     u.username = "testuser"
@@ -20,7 +20,7 @@ def fake_user(role="journalist", user_id=1):
     return u
 
 
-FAKE_USER = fake_user("journalist", 1)
+FAKE_USER = fake_user("writer", 1)
 
 
 @pytest.fixture
@@ -39,7 +39,7 @@ async def test_get_me(client_with_db):
     c, _ = client_with_db
     resp = await c.get("/users/me")
     assert resp.status_code == 200
-    assert resp.json()["role"] == "journalist"
+    assert resp.json()["role"] == "writer"
 
 
 async def test_list_users_as_editor():
@@ -75,7 +75,7 @@ async def test_update_role_as_admin():
     app.dependency_overrides[get_db] = lambda: db
     app.dependency_overrides[get_current_user] = lambda: ADMIN
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-        resp = await c.put("/users/1/role", json={"role": "editor"})
+        resp = await c.put("/users/1/role", json={"role": "writer"})
     assert resp.status_code == 200
     app.dependency_overrides.pop(get_db, None)
     app.dependency_overrides.pop(get_current_user, None)

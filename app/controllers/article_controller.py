@@ -16,7 +16,7 @@ router = APIRouter(prefix="/articles", tags=["Articles"])
 async def publish_article(
     payload: PublishRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role("admin", "editor")),
+    current_user: User = Depends(require_role("editor_in_chief", "associate_editor")),
 ):
     mongo_db = get_mongo_db()
     draft = await mongo_db["drafts"].find_one({"_id": ObjectId(payload.draft_id)})
@@ -58,7 +58,7 @@ async def get_article(article_id: int, db: AsyncSession = Depends(get_db)):
 async def delete_article(
     article_id: int,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(require_role("admin", "editor")),
+    _: User = Depends(require_role("editor_in_chief", "associate_editor")),
 ):
     result = await db.execute(select(PublishedArticle).where(PublishedArticle.id == article_id))
     article = result.scalar_one_or_none()

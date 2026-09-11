@@ -18,7 +18,7 @@ async def get_me(current_user: User = Depends(get_current_user)):
 @router.get("", response_model=list[UserResponse])
 async def list_users(
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(require_role("admin", "editor")),
+    _: User = Depends(require_role("editor_in_chief", "associate_editor")),
 ):
     result = await db.execute(select(User))
     return result.scalars().all()
@@ -28,7 +28,7 @@ async def list_users(
 async def get_user(
     user_id: int,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(require_role("admin", "editor")),
+    _: User = Depends(require_role("editor_in_chief", "associate_editor")),
 ):
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
@@ -42,7 +42,7 @@ async def update_role(
     user_id: int,
     payload: UpdateRoleRequest,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(require_role("admin")),
+    _: User = Depends(require_role("editor_in_chief")),
 ):
     if payload.role not in RoleEnum._value2member_map_:
         raise HTTPException(status_code=400, detail="Invalid role")
@@ -60,7 +60,7 @@ async def update_role(
 async def delete_user(
     user_id: int,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(require_role("admin")),
+    _: User = Depends(require_role("editor_in_chief")),
 ):
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()

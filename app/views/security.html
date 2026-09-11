@@ -1,0 +1,76 @@
+{% extends "layout.html" %}
+{% block page_title %}Security — PubMat Console{% endblock %}
+{% block title %}Admin Security{% endblock %}
+{% block subtitle %}JWT configuration and administrator accounts{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+  <!-- JWT Config -->
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+    <div class="flex items-center gap-3 mb-5">
+      <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
+        <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+      </div>
+      <div>
+        <div class="font-semibold text-gray-800">JWT Configuration</div>
+        <div class="text-xs text-gray-400">Token signing settings</div>
+      </div>
+    </div>
+    <dl class="space-y-3">
+      {% for label, value in [("Algorithm", "HS256"), ("Token Expiry", "60 minutes"), ("Token URL", "/auth/login"), ("Scheme", "Bearer")] %}
+      <div class="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0">
+        <dt class="text-sm text-gray-500">{{ label }}</dt>
+        <dd class="text-sm font-mono font-semibold text-gray-800 bg-gray-50 px-3 py-1 rounded-lg">{{ value }}</dd>
+      </div>
+      {% endfor %}
+    </dl>
+  </div>
+
+  <!-- Admin Accounts -->
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+    <div class="flex items-center gap-3 mb-5">
+      <div class="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center">
+        <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+      </div>
+      <div>
+        <div class="font-semibold text-gray-800">Admin Accounts</div>
+        <div class="text-xs text-gray-400">{{ admins|length }} administrator{{ 's' if admins|length != 1 }}</div>
+      </div>
+    </div>
+    <div class="space-y-3">
+      {% for admin in admins %}
+      <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+        <div class="w-9 h-9 bg-rose-100 rounded-full flex items-center justify-center text-rose-700 font-bold text-sm">
+          {{ admin.username[0].upper() }}
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="text-sm font-semibold text-gray-800">{{ admin.username }}</div>
+          <div class="text-xs text-gray-400 truncate">{{ admin.email }}</div>
+        </div>
+        <span class="text-xs bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full font-medium">admin</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Role Reference -->
+  <div class="md:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+    <div class="font-semibold text-gray-800 mb-4">Role Permissions Reference</div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {% for role, color, perms in [
+        ("admin", "indigo", "Full access — all operations"),
+        ("editor", "violet", "Review, approve, publish"),
+        ("journalist", "emerald", "Create & submit drafts"),
+        ("layout_artist", "amber", "Attach pubmat assets"),
+      ] %}
+      <div class="bg-{{ color }}-50 border border-{{ color }}-100 rounded-xl p-4">
+        <div class="text-xs font-bold text-{{ color }}-700 uppercase tracking-wide mb-1">{{ role }}</div>
+        <div class="text-xs text-{{ color }}-600">{{ perms }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

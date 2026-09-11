@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 
 from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException
@@ -26,12 +26,12 @@ async def submit_draft(draft_id: str, current_user: User = Depends(get_current_u
         raise HTTPException(status_code=403, detail="Access denied")
     if doc["status"] != "draft":
         raise HTTPException(status_code=400, detail="Only drafts can be submitted")
-    await col.update_one({"_id": ObjectId(draft_id)}, {"$set": {"status": "submitted", "updated_at": datetime.utcnow()}})
+    await col.update_one({"_id": ObjectId(draft_id)}, {"$set": {"status": "submitted", "updated_at": datetime.now(UTC)}})
     return {"message": "Draft submitted for review"}
 
 
 @router.get("/pending")
-async def list_pending(_: User = Depends(require_role("admin", "editor"))):
+async def list_pending(_: User = Depends(require_role("editor_in_chief", "associate_editor"))):
     col = _col()
     docs = await col.find({"status": "submitted"}).to_list(length=100)
     return [{**doc_to_dict(d), "id": str(d["_id"])} for d in docs]
@@ -41,7 +41,7 @@ async def list_pending(_: User = Depends(require_role("admin", "editor"))):
 async def review_draft(
     draft_id: str,
     payload: ReviewRequest,
-    current_user: User = Depends(require_role("admin", "editor")),
+    current_user: User = Depends(require_role("editor_in_chief", "associate_editor")),
 ):
     if payload.action not in ("approve", "reject"):
         raise HTTPException(status_code=400, detail="Action must be 'approve' or 'reject'")
@@ -53,14 +53,14 @@ async def review_draft(
         raise HTTPException(status_code=400, detail="Draft is not pending review")
 
     new_status = "approved" if payload.action == "approve" else "rejected"
-    update: dict = {"$set": {"status": new_status, "updated_at": datetime.utcnow()}}
+    update: dict = {"$set": {"status": new_status, "updated_at": datetime.now(UTC)}}
 
     if payload.comment:
         comment = {
             "id": str(ObjectId()),
             "author_id": current_user.id,
             "body": payload.comment,
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(UTC),
         }
         update["$push"] = {"comments": comment}
 

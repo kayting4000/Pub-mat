@@ -13,7 +13,7 @@ from app.models.sql_models import User, RoleEnum
 
 # --- Shared fake users ---
 
-def make_user(role="journalist", user_id=1):
+def make_user(role="writer", user_id=1):
     u = MagicMock(spec=User)
     u.id = user_id
     u.username = "testuser"
@@ -23,9 +23,9 @@ def make_user(role="journalist", user_id=1):
     return u
 
 
-JOURNALIST = make_user("journalist", 1)
-EDITOR = make_user("editor", 2)
-ADMIN = make_user("admin", 3)
+JOURNALIST = make_user("writer", 1)
+EDITOR = make_user("editor_in_chief", 2)
+ADMIN = make_user("editor_in_chief", 3)
 LAYOUT = make_user("layout_artist", 4)
 
 

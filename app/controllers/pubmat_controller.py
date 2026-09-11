@@ -16,7 +16,7 @@ async def attach_pubmat(
     article_id: int,
     payload: PubMatAttach,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role("admin", "editor", "layout_artist")),
+    current_user: User = Depends(require_role("editor_in_chief", "associate_editor", "layout_artist", "photojournalist", "cartoonist")),
 ):
     result = await db.execute(select(PublishedArticle).where(PublishedArticle.id == article_id))
     if not result.scalar_one_or_none():
@@ -32,7 +32,6 @@ async def attach_pubmat(
     await db.commit()
     await db.refresh(asset)
 
-    # Store rich metadata in Mongo
     mongo_db = get_mongo_db()
     await mongo_db["pubmat_metadata"].insert_one({
         "article_id": article_id,
@@ -42,7 +41,6 @@ async def attach_pubmat(
         "tags": payload.tags,
         "uploaded_by": current_user.id,
     })
-
     return asset
 
 

@@ -1,0 +1,170 @@
+{% extends "layout.html" %}
+{% block page_title %}Database Manager — PubMat Console{% endblock %}
+{% block title %}PostgreSQL Manager{% endblock %}
+{% block subtitle %}Manage users, categories, and published articles{% endblock %}
+
+{% block content %}
+
+<!-- Tabs -->
+<div class="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6 w-fit">
+  <button onclick="showTab('users')" id="tab-users"
+          class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition-all bg-white text-gray-900 shadow-sm">
+    Users
+  </button>
+  <button onclick="showTab('categories')" id="tab-categories"
+          class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition-all text-gray-500 hover:text-gray-700">
+    Categories
+  </button>
+  <button onclick="showTab('articles')" id="tab-articles"
+          class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition-all text-gray-500 hover:text-gray-700">
+    Articles
+  </button>
+</div>
+
+<!-- Users Tab -->
+<div id="panel-users">
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+      <h2 class="font-semibold text-gray-800">All Users <span class="ml-2 text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{{ users|length }}</span></h2>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
+          <tr>
+            <th class="px-6 py-3 text-left">User</th>
+            <th class="px-6 py-3 text-left">Email</th>
+            <th class="px-6 py-3 text-left">Role</th>
+            <th class="px-6 py-3 text-left">Joined</th>
+            <th class="px-6 py-3 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          {% for user in users %}
+          <tr class="hover:bg-gray-50 transition-colors">
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-xs">
+                  {{ user.username[0].upper() }}
+                </div>
+                <span class="font-medium text-gray-900">{{ user.username }}</span>
+              </div>
+            </td>
+            <td class="px-6 py-4 text-gray-500">{{ user.email }}</td>
+            <td class="px-6 py-4">
+              <form method="post" action="/console/database/users/{{ user.id }}/role" class="flex items-center gap-2">
+                <select name="role" class="border border-gray-200 rounded-lg px-2 py-1 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                  {% for role in roles %}
+                  <option value="{{ role }}" {{ 'selected' if user.role == role }}>{{ role }}</option>
+                  {% endfor %}
+                </select>
+                <button type="submit" class="text-xs bg-indigo-600 text-white px-3 py-1 rounded-lg hover:bg-indigo-500 transition-colors">Save</button>
+              </form>
+            </td>
+            <td class="px-6 py-4 text-gray-400 text-xs">{{ user.created_at.strftime("%b %d, %Y") }}</td>
+            <td class="px-6 py-4">
+              <form method="post" action="/console/database/users/{{ user.id }}/delete"
+                    onsubmit="return confirm('Delete {{ user.username }}? This cannot be undone.')">
+                <button type="submit" class="text-xs text-red-500 hover:text-red-700 font-medium transition-colors">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Categories Tab -->
+<div id="panel-categories" class="hidden">
+  <!-- Create Form -->
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-4">
+    <h3 class="font-semibold text-gray-800 mb-4">Add Category</h3>
+    <form method="post" action="/console/database/categories/create" class="flex gap-3">
+      <input name="name" placeholder="Category name" required
+             class="border border-gray-200 rounded-xl px-4 py-2 text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-indigo-300">
+      <input name="description" placeholder="Description (optional)"
+             class="border border-gray-200 rounded-xl px-4 py-2 text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-indigo-300">
+      <button type="submit" class="bg-indigo-600 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-indigo-500 transition-colors">
+        Add
+      </button>
+    </form>
+  </div>
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100">
+      <h2 class="font-semibold text-gray-800">Categories <span class="ml-2 text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{{ categories|length }}</span></h2>
+    </div>
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
+        <tr>
+          <th class="px-6 py-3 text-left">ID</th>
+          <th class="px-6 py-3 text-left">Name</th>
+          <th class="px-6 py-3 text-left">Description</th>
+          <th class="px-6 py-3 text-left">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-50">
+        {% for cat in categories %}
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="px-6 py-4 text-gray-400 text-xs">{{ cat.id }}</td>
+          <td class="px-6 py-4 font-medium text-gray-900">{{ cat.name }}</td>
+          <td class="px-6 py-4 text-gray-500">{{ cat.description or "—" }}</td>
+          <td class="px-6 py-4">
+            <form method="post" action="/console/database/categories/{{ cat.id }}/delete"
+                  onsubmit="return confirm('Delete category {{ cat.name }}?')">
+              <button type="submit" class="text-xs text-red-500 hover:text-red-700 font-medium transition-colors">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Articles Tab -->
+<div id="panel-articles" class="hidden">
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100">
+      <h2 class="font-semibold text-gray-800">Published Articles <span class="ml-2 text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{{ articles|length }}</span></h2>
+    </div>
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
+        <tr>
+          <th class="px-6 py-3 text-left">Title</th>
+          <th class="px-6 py-3 text-left">Author ID</th>
+          <th class="px-6 py-3 text-left">Category</th>
+          <th class="px-6 py-3 text-left">Published</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-50">
+        {% for article in articles %}
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="px-6 py-4 font-medium text-gray-900">{{ article.title }}</td>
+          <td class="px-6 py-4 text-gray-500">{{ article.author_id }}</td>
+          <td class="px-6 py-4 text-gray-500">{{ article.category_id or "—" }}</td>
+          <td class="px-6 py-4 text-gray-400 text-xs">{{ article.published_at.strftime("%b %d, %Y") }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="px-6 py-8 text-center text-gray-400 text-sm">No published articles yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  function showTab(name) {
+    ['users','categories','articles'].forEach(t => {
+      document.getElementById('panel-' + t).classList.add('hidden');
+      const btn = document.getElementById('tab-' + t);
+      btn.classList.remove('bg-white','text-gray-900','shadow-sm');
+      btn.classList.add('text-gray-500');
+    });
+    document.getElementById('panel-' + name).classList.remove('hidden');
+    const active = document.getElementById('tab-' + name);
+    active.classList.add('bg-white','text-gray-900','shadow-sm');
+    active.classList.remove('text-gray-500');
+  }
+</script>
+{% endblock %}

@@ -14,7 +14,7 @@ router = APIRouter(prefix="/categories", tags=["Categories"])
 async def create_category(
     payload: CategoryCreate,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(require_role("admin", "editor")),
+    _: User = Depends(require_role("editor_in_chief", "associate_editor")),
 ):
     category = Category(**payload.model_dump())
     db.add(category)
@@ -34,7 +34,7 @@ async def update_category(
     category_id: int,
     payload: CategoryUpdate,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(require_role("admin", "editor")),
+    _: User = Depends(require_role("editor_in_chief", "associate_editor")),
 ):
     result = await db.execute(select(Category).where(Category.id == category_id))
     category = result.scalar_one_or_none()
@@ -51,7 +51,7 @@ async def update_category(
 async def delete_category(
     category_id: int,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(require_role("admin", "editor")),
+    _: User = Depends(require_role("editor_in_chief", "associate_editor")),
 ):
     result = await db.execute(select(Category).where(Category.id == category_id))
     category = result.scalar_one_or_none()

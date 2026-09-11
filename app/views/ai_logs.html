@@ -1,0 +1,105 @@
+{% extends "layout.html" %}
+{% block page_title %}AI Inspector — PubMat Console{% endblock %}
+{% block title %}Gemini AI Inspector{% endblock %}
+{% block subtitle %}Evaluate drafts with Gemini 2.5 Flash{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+  <!-- Run Form -->
+  <div class="lg:col-span-1">
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sticky top-0">
+      <div class="flex items-center gap-3 mb-5">
+        <div class="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
+          <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+        </div>
+        <div>
+          <div class="font-semibold text-gray-800">Run Evaluation</div>
+          <div class="text-xs text-gray-400">Powered by Gemini 2.5 Flash</div>
+        </div>
+      </div>
+      {% if drafts %}
+      <form method="post" action="/console/ai/run" class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-2">Select Draft</label>
+          <select name="draft_id" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 bg-white">
+            {% for draft in drafts %}
+            <option value="{{ draft._id }}">{{ draft.title[:40] }}{% if draft.title|length > 40 %}…{% endif %}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button type="submit"
+                class="w-full bg-amber-500 hover:bg-amber-400 text-white py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm shadow-amber-200">
+          ▶ Evaluate Draft
+        </button>
+      </form>
+      {% else %}
+      <p class="text-sm text-gray-400 text-center py-4">No drafts available to evaluate.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Logs -->
+  <div class="lg:col-span-2">
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h2 class="font-semibold text-gray-800">Evaluation Logs</h2>
+        <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{{ logs|length }} records</span>
+      </div>
+
+      {% if logs %}
+      <div class="divide-y divide-gray-50">
+        {% for log in logs %}
+        {% set r = log.parsed_result %}
+        <div class="px-6 py-5 hover:bg-gray-50 transition-colors">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-xs font-semibold text-gray-400 uppercase">{{ log.entity_type }}</span>
+                <span class="text-gray-300">·</span>
+                <span class="text-xs text-gray-400">{{ log.logged_at.strftime("%b %d, %Y %H:%M") }}</span>
+              </div>
+              <p class="text-sm text-gray-700 mb-3">{{ r.summary }}</p>
+              <div class="flex flex-wrap gap-2">
+                {% for s in r.get('strengths', [])[:2] %}
+                <span class="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">✓ {{ s }}</span>
+                {% endfor %}
+                {% for c in r.get('concerns', [])[:2] %}
+                <span class="text-xs bg-rose-50 text-rose-700 px-2 py-0.5 rounded-full">⚠ {{ c }}</span>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="flex flex-col items-end gap-2 flex-shrink-0">
+              <!-- Score Ring -->
+              <div class="relative w-14 h-14">
+                <svg class="w-14 h-14 -rotate-90" viewBox="0 0 36 36">
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#f3f4f6" stroke-width="3"/>
+                  <circle cx="18" cy="18" r="15.9" fill="none"
+                          stroke="{{ '#10b981' if r.score >= 70 else '#f59e0b' if r.score >= 40 else '#ef4444' }}"
+                          stroke-width="3"
+                          stroke-dasharray="{{ r.score }}, 100"
+                          stroke-linecap="round"/>
+                </svg>
+                <div class="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-800">{{ r.score }}</div>
+              </div>
+              <span class="text-xs font-semibold px-2.5 py-1 rounded-full
+                {{ 'bg-emerald-100 text-emerald-700' if r.recommendation == 'approve' else 'bg-rose-100 text-rose-700' }}">
+                {{ r.recommendation }}
+              </span>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="px-6 py-16 text-center">
+        <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+          <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+        </div>
+        <p class="text-sm text-gray-400">No evaluations yet. Select a draft and run one.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

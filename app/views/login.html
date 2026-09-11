@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PubMat — Admin Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-gray-950 via-indigo-950 to-gray-900 flex items-center justify-center p-4">
+  <div class="w-full max-w-sm">
+    <!-- Logo -->
+    <div class="text-center mb-8">
+      <div class="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4 shadow-lg shadow-indigo-500/30">P</div>
+      <h1 class="text-white text-2xl font-bold">PubMat Console</h1>
+      <p class="text-gray-400 text-sm mt-1">Admin & Editor access only</p>
+    </div>
+
+    <!-- Card -->
+    <div class="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-8 shadow-2xl">
+      {% if error %}
+      <div class="mb-5 flex items-center gap-2 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3">
+        <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+        {{ error }}
+      </div>
+      {% endif %}
+
+      <form method="post" action="/auth/login-console" class="space-y-5">
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Username</label>
+          <input name="username" type="text" required autofocus
+                 class="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                 placeholder="Enter username">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Password</label>
+          <input name="password" type="password" required
+                 class="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                 placeholder="Enter password">
+        </div>
+        <button type="submit"
+                class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl text-sm font-semibold transition-all duration-150 shadow-lg shadow-indigo-500/20 mt-2">
+          Sign In to Console
+        </button>
+      </form>
+    </div>
+
+    <p class="text-center text-gray-600 text-xs mt-6">
+      <a href="/" class="hover:text-gray-400 transition-colors">← Back to public site</a>
+    </p>
+  </div>
+</body>
+</html>

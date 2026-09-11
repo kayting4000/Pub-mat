@@ -8,10 +8,16 @@ from app.core.database_pg import Base
 
 
 class RoleEnum(str, enum.Enum):
-    admin = "admin"
-    editor = "editor"
-    journalist = "journalist"
+    editor_in_chief = "editor_in_chief"
+    associate_editor = "associate_editor"
+    writer = "writer"
+    photojournalist = "photojournalist"
     layout_artist = "layout_artist"
+    cartoonist = "cartoonist"
+
+
+CONSOLE_ROLES = ("editor_in_chief", "associate_editor")
+STAFF_ROLES = ("writer", "photojournalist", "layout_artist", "cartoonist")
 
 
 class User(Base):
@@ -21,7 +27,7 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     email: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
-    role: Mapped[str] = mapped_column(Enum(RoleEnum), default=RoleEnum.journalist, nullable=False)
+    role: Mapped[str] = mapped_column(Enum(RoleEnum), default=RoleEnum.writer, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     articles: Mapped[list["PublishedArticle"]] = relationship("PublishedArticle", back_populates="author")
@@ -42,7 +48,7 @@ class PublishedArticle(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
-    draft_id: Mapped[str] = mapped_column(String(24), nullable=False)  # Mongo ObjectId
+    draft_id: Mapped[str] = mapped_column(String(24), nullable=False)
     author_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     category_id: Mapped[int | None] = mapped_column(ForeignKey("categories.id"), nullable=True)
     published_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
@@ -58,7 +64,7 @@ class PubMatAsset(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     article_id: Mapped[int] = mapped_column(ForeignKey("published_articles.id"), nullable=False)
     asset_url: Mapped[str] = mapped_column(String(500), nullable=False)
-    asset_type: Mapped[str] = mapped_column(String(50), nullable=False)  # image, pdf, etc.
+    asset_type: Mapped[str] = mapped_column(String(50), nullable=False)
     uploaded_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     uploaded_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
